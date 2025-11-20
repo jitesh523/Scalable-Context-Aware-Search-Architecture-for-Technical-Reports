@@ -19,8 +19,14 @@ class CloudSQLClient:
     """
     
     def __init__(self):
+        self.mock_mode = settings.features.mock_mode
         self.conn_str = settings.postgres.database_url
-        self._init_db()
+        self.mock_history = []
+        
+        if not self.mock_mode:
+            self._init_db()
+        else:
+            logger.info("CloudSQLClient initialized in MOCK MODE")
         
     def _init_db(self):
         """Initialize database connection and extensions."""
@@ -37,6 +43,17 @@ class CloudSQLClient:
         """
         Save user interaction with embedding for memory.
         """
+        if self.mock_mode:
+            self.mock_history.append({
+                "user_id": user_id,
+                "query_text": query,
+                "response_text": response,
+                "embedding": embedding,
+                "timestamp": "2024-01-01T00:00:00" # Dummy timestamp
+            })
+            logger.info("[MOCK] Saved interaction to CloudSQL mock")
+            return
+
         with psycopg.connect(self.conn_str, autocommit=True) as conn:
             register_vector(conn)
             with conn.cursor() as cur:
@@ -52,6 +69,10 @@ class CloudSQLClient:
         """
         Get recent user history.
         """
+        if self.mock_mode:
+            user_history = [h for h in self.mock_history if h["user_id"] == user_id]
+            return user_history[-limit:]
+
         with psycopg.connect(self.conn_str, row_factory=dict_row) as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -70,6 +91,10 @@ class CloudSQLClient:
         """
         Semantic search over user's conversation history.
         """
+        if self.mock_mode:
+            # Return empty or random for mock
+            return []
+
         with psycopg.connect(self.conn_str, row_factory=dict_row) as conn:
             register_vector(conn)
             with conn.cursor() as cur:

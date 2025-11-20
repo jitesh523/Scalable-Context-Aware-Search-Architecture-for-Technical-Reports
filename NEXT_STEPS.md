@@ -38,14 +38,26 @@ OPENAI_API_KEY=your-key JWT_SECRET_KEY=your-secret pytest tests/test_ingestion.p
 OPENAI_API_KEY=your-key JWT_SECRET_KEY=your-secret pytest tests/test_search.py -v
 ```
 
-#### 3. Start the API Server (Without External Services)
+#### 3. Start the API Server (Local Mock Mode)
 
-```bash
-source venv/bin/activate
-OPENAI_API_KEY=your-key JWT_SECRET_KEY=your-secret uvicorn src.api.main:app --reload
-```
+Since Docker is not installed, you can run the system in **Mock Mode**, which simulates the database connections in memory.
 
-**Note:** The API will fail to connect to Milvus, Elasticsearch, and PostgreSQL unless they are running. See Option 2 for full setup.
+1. Enable Mock Mode in `.env`:
+   ```bash
+   echo "MOCK_MODE=True" >> .env
+   ```
+
+2. Start the server:
+   ```bash
+   source venv/bin/activate
+   OPENAI_API_KEY=your-key JWT_SECRET_KEY=your-secret uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+3. Access the API:
+   - **Swagger UI**: http://localhost:8000/docs
+   - **Health Check**: http://localhost:8000/health
+
+**Note:** In Mock Mode, data is stored in memory and will be lost when the server restarts. Search results will be simulated.
 
 ### Option 2: Full Local Deployment (Requires Docker)
 

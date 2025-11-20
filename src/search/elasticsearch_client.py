@@ -17,14 +17,24 @@ class ElasticsearchClient:
     """
     
     def __init__(self):
-        self.client = AsyncElasticsearch(
-            hosts=[f"http://{settings.elasticsearch.elasticsearch_host}:{settings.elasticsearch.elasticsearch_port}"],
-            basic_auth=(settings.elasticsearch.elasticsearch_user, settings.elasticsearch.elasticsearch_password)
-        )
+        self.mock_mode = settings.features.mock_mode
         self.index_name = settings.elasticsearch.elasticsearch_index_name
+        self.mock_storage = []
+        
+        if not self.mock_mode:
+            self.client = AsyncElasticsearch(
+                hosts=[f"http://{settings.elasticsearch.elasticsearch_host}:{settings.elasticsearch.elasticsearch_port}"],
+                basic_auth=(settings.elasticsearch.elasticsearch_user, settings.elasticsearch.elasticsearch_password)
+            )
+        else:
+            logger.info("ElasticsearchClient initialized in MOCK MODE")
+            self.client = None
 
     async def ensure_index(self):
         """Create index with custom settings if it doesn't exist."""
+        if self.mock_mode:
+            return
+
         if await self.client.indices.exists(index=self.index_name):
             return
 
@@ -64,6 +74,11 @@ class ElasticsearchClient:
         """
         Bulk index chunks.
         """
+        if self.mock_mode:
+            self.mock_storage.extend(chunks)
+            logger.info(f"[MOCK] Indexed {len(chunks)} documents in Elasticsearch mock storage")
+            return
+
         actions = []
         for chunk in chunks:
             action = {
@@ -85,6 +100,28 @@ class ElasticsearchClient:
         """
         Perform BM25 lexical search.
         """
+        if self.mock_mode:
+            # Simple keyword match mock
+            hits = []
+            query_terms = query.lower().split()
+            for i, chunk in enumerate(self.mock_storage):
+                content = chunk["content"].lower()
+                score = sum(1 for term in query_terms if term in content)
+                if score > 0:
+                    hits.append({
+                        "id": chunk["id"],
+                        "score": float(score),
+                        "content": chunk["content"],
+                        "metadata": chunk["metadata"],
+                        "parent_id": chunk.get("parent_id")
+                    })
+            
+            # Sort by score
+            hits.sort(key=lambda x: x["score"], reverse=True)
+            hits = hits[:limit]
+            logger.info(f"[MOCK] Elasticsearch returned {len(hits)} results")
+            return hits
+
         response = await self.client.search(
             index=self.index_name,
             query={
@@ -111,4 +148,5 @@ class ElasticsearchClient:
         return hits
         
     async def close(self):
-        await self.client.close()
+        if not self.mock_mode:
+            await self.client.close()

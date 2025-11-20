@@ -24,9 +24,15 @@ class MilvusClient:
     """
     
     def __init__(self):
-        self.connect()
+        self.mock_mode = settings.features.mock_mode
         self.collection_name = settings.milvus.milvus_collection_name
-        self._ensure_collection()
+        self.mock_storage = []
+        
+        if not self.mock_mode:
+            self.connect()
+            self._ensure_collection()
+        else:
+            logger.info("MilvusClient initialized in MOCK MODE")
         
     def connect(self):
         """Establish connection to Milvus."""
@@ -82,6 +88,11 @@ class MilvusClient:
         """
         Insert chunks into Milvus.
         """
+        if self.mock_mode:
+            self.mock_storage.extend(chunks)
+            logger.info(f"[MOCK] Inserted {len(chunks)} chunks into Milvus mock storage")
+            return
+
         data = [
             [c["id"] for c in chunks],
             [c["content"] for c in chunks],
@@ -99,6 +110,21 @@ class MilvusClient:
         """
         Perform vector similarity search.
         """
+        if self.mock_mode:
+            # Simple mock search - return random or all documents
+            # In a real mock, we could do cosine similarity, but for now just return up to limit
+            hits = []
+            for i, chunk in enumerate(self.mock_storage[:limit]):
+                hits.append({
+                    "id": chunk["id"],
+                    "score": 0.9 - (i * 0.01), # Fake score
+                    "content": chunk["content"],
+                    "metadata": chunk["metadata"],
+                    "parent_id": chunk.get("parent_id")
+                })
+            logger.info(f"[MOCK] Search returned {len(hits)} results")
+            return hits
+
         search_params = {
             "metric_type": settings.milvus.metric_type,
             "params": {"ef": settings.milvus.hnsw_ef_search}

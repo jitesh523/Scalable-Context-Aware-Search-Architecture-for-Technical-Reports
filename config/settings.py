@@ -163,7 +163,9 @@ class FeatureFlagsSettings(BaseSettings):
     enable_web_search: bool = Field(default=False, description="Enable web search fallback")
     enable_query_expansion: bool = Field(default=True, description="Enable query expansion")
     enable_caching: bool = Field(default=True, description="Enable response caching")
+    enable_caching: bool = Field(default=True, description="Enable response caching")
     cache_ttl_seconds: int = Field(default=3600, description="Cache TTL in seconds")
+    mock_mode: bool = Field(default=False, description="Enable mock mode for local testing without infrastructure")
     
     model_config = SettingsConfigDict(env_prefix="")
 
