@@ -5,7 +5,7 @@ Checks if the generated answer is grounded in the documents and addresses the qu
 
 import logging
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
 
 from config.settings import settings
