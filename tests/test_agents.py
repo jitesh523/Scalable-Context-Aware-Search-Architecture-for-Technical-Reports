@@ -10,7 +10,10 @@ from src.agents.langgraph_workflow import RAGWorkflow
 
 def test_router_agent():
     with patch("src.agents.router_agent.ChatOpenAI") as mock_llm:
-        mock_llm.return_value.with_structured_output.return_value.invoke.return_value.datasource = "vectorstore"
+        # Create a mock result object
+        mock_result = Mock()
+        mock_result.datasource = "vectorstore"
+        mock_llm.return_value.with_structured_output.return_value.invoke.return_value = mock_result
         
         agent = RouterAgent()
         result = agent.route("What is the maximum temperature?")
@@ -18,7 +21,10 @@ def test_router_agent():
 
 def test_retrieval_grader():
     with patch("src.agents.retrieval_grader.ChatOpenAI") as mock_llm:
-        mock_llm.return_value.with_structured_output.return_value.invoke.return_value.binary_score = "yes"
+        # Create a mock result object
+        mock_result = Mock()
+        mock_result.binary_score = "yes"
+        mock_llm.return_value.with_structured_output.return_value.invoke.return_value = mock_result
         
         agent = RetrievalGrader()
         result = agent.grade("question", "document content")

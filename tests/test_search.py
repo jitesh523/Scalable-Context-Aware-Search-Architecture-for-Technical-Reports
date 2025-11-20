@@ -35,8 +35,10 @@ async def test_hybrid_search_engine():
         # Setup mocks
         engine = HybridSearchEngine()
         
-        # Mock embedding
-        mock_embed.return_value.aembed_query.return_value = [0.1] * 768
+        # Mock embedding - return awaitable
+        async def mock_aembed_query(text):
+            return [0.1] * 768
+        engine.embeddings.aembed_query = mock_aembed_query
         
         # Mock search results
         mock_milvus.return_value.search.return_value = [{"id": "1", "score": 0.9}]
