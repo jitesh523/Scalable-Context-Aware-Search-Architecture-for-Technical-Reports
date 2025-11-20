@@ -1,0 +1,39 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'rag-system'
+    environment: 'development'
+
+scrape_configs:
+  # FastAPI Application Metrics
+  - job_name: 'fastapi-app'
+    static_configs:
+      - targets: ['host.docker.internal:8000']
+    metrics_path: '/metrics'
+
+  # Milvus Metrics
+  - job_name: 'milvus'
+    static_configs:
+      - targets: ['milvus:9091']
+
+  # Elasticsearch Metrics
+  - job_name: 'elasticsearch'
+    static_configs:
+      - targets: ['elasticsearch:9200']
+    metrics_path: '/_prometheus/metrics'
+
+  # PostgreSQL Metrics (requires postgres_exporter)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+
+  # Redis Metrics (requires redis_exporter)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  # Prometheus Self-Monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
