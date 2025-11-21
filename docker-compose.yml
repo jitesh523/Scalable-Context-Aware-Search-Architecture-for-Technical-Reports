@@ -15,7 +15,7 @@ services:
       - etcd_data:/etcd
     command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
     healthcheck:
-      test: ["CMD", "etcdctl", "endpoint", "health"]
+      test: [ "CMD", "etcdctl", "endpoint", "health" ]
       interval: 30s
       timeout: 20s
       retries: 3
@@ -29,7 +29,7 @@ services:
       - minio_data:/minio_data
     command: minio server /minio_data --console-address ":9001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 30s
       timeout: 20s
       retries: 3
@@ -48,9 +48,9 @@ services:
     ports:
       - "19530:19530"
       - "9091:9091"
-    command: ["milvus", "run", "standalone"]
+    command: [ "milvus", "run", "standalone" ]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      test: [ "CMD", "curl", "-f", "http://localhost:9091/healthz" ]
       interval: 30s
       start_period: 90s
       timeout: 20s
@@ -72,7 +72,7 @@ services:
       - "9200:9200"
       - "9300:9300"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      test: [ "CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -93,7 +93,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -110,7 +110,7 @@ services:
       - redis_data:/data
     command: redis-server --appendonly yes
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -157,6 +157,7 @@ volumes:
   redis_data:
   grafana_data:
   prometheus_data:
+
 
 networks:
   default:

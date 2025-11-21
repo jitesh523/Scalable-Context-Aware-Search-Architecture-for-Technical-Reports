@@ -55,6 +55,7 @@ locust==2.32.4
 faker==33.1.0
 ragas==0.2.12
 datasets==2.14.6
+neo4j==5.15.0
 
 # Development
 black==24.10.0

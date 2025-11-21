@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 from src.search.query_expansion import QueryExpander
 
+from src.graph.retriever import GraphRetriever
+
 class HybridSearchEngine:
     """
     Main search engine class combining dense and sparse retrieval.
@@ -32,6 +34,7 @@ class HybridSearchEngine:
             api_key=settings.llm.openai_api_key
         )
         self.query_expander = QueryExpander()
+        self.graph_retriever = GraphRetriever()
         
     async def initialize(self):
         """Initialize async components."""
@@ -61,7 +64,7 @@ class HybridSearchEngine:
 
     async def search(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """
-        Perform hybrid search with query expansion.
+        Perform hybrid search with query expansion and graph retrieval.
         """
         # 1. Generate embedding for original query (Dense Search)
         query_vector = await self.embeddings.aembed_query(query)
@@ -81,8 +84,11 @@ class HybridSearchEngine:
         # Use expanded query for Elasticsearch
         lexical_task = self.es.search(expanded_query_str, limit=limit * 2)
         
-        semantic_results, lexical_results = await asyncio.gather(
-            semantic_task, lexical_task
+        # Graph Retrieval task
+        graph_task = self.graph_retriever.retrieve(query)
+        
+        semantic_results, lexical_results, graph_context = await asyncio.gather(
+            semantic_task, lexical_task, graph_task
         )
         
         # 4. RRF Fusion
@@ -91,6 +97,21 @@ class HybridSearchEngine:
             lexical_results, 
             limit=limit
         )
+        
+        # 5. Append Graph Context
+        # We treat graph facts as high-relevance chunks
+        if graph_context:
+            logger.info(f"Found {len(graph_context)} graph facts")
+            graph_chunks = [
+                {
+                    "content": f"[GRAPH KNOWLEDGE] {fact}",
+                    "metadata": {"source": "knowledge_graph"},
+                    "score": 1.0 # High score to ensure visibility
+                }
+                for fact in graph_context
+            ]
+            # Prepend graph chunks to ensure they are seen by the LLM
+            fused_results = graph_chunks + fused_results
         
         return fused_results
         
