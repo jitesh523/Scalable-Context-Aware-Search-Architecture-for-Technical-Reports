@@ -59,6 +59,19 @@ Since Docker is not installed, you can run the system in **Mock Mode**, which si
 
 **Note:** In Mock Mode, data is stored in memory and will be lost when the server restarts. Search results will be simulated.
 
+#### 4. Start the Frontend Interface
+
+Open a new terminal window and run:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+- **Web Interface**: http://localhost:3000
+- **Features**: Chat, Document Upload, Citation View
+
 ### Option 2: Full Local Deployment (Requires Docker)
 
 #### 1. Install Docker Desktop
