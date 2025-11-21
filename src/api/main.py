@@ -78,7 +78,10 @@ async def health_check():
     """Health check endpoint."""
     return {"status": "healthy", "version": "1.0.0"}
 
+from src.cache.decorators import cache_response
+
 @app.post("/search", response_model=SearchResponse)
+@cache_response(ttl=settings.redis.ttl, prefix="search")
 async def search(
     request: SearchRequest,
     background_tasks: BackgroundTasks,

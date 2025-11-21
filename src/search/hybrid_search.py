@@ -16,6 +16,8 @@ from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
+from src.search.query_expansion import QueryExpander
+
 class HybridSearchEngine:
     """
     Main search engine class combining dense and sparse retrieval.
@@ -29,6 +31,7 @@ class HybridSearchEngine:
             model=settings.llm.embedding_model,
             api_key=settings.llm.openai_api_key
         )
+        self.query_expander = QueryExpander()
         
     async def initialize(self):
         """Initialize async components."""
@@ -58,24 +61,31 @@ class HybridSearchEngine:
 
     async def search(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """
-        Perform hybrid search.
+        Perform hybrid search with query expansion.
         """
-        # 1. Generate embedding for query
+        # 1. Generate embedding for original query (Dense Search)
         query_vector = await self.embeddings.aembed_query(query)
         
-        # 2. Parallel search execution
+        # 2. Expand query for Lexical Search
+        expanded_terms = await self.query_expander.expand_query(query)
+        expanded_query_str = " ".join(expanded_terms)
+        logger.info(f"Expanded query: '{query}' -> '{expanded_query_str}'")
+        
+        # 3. Parallel search execution
         semantic_task = asyncio.to_thread(
             self.milvus.search, 
             vector=query_vector, 
-            limit=limit * 2 # Fetch more for re-ranking
+            limit=limit * 2 
         )
-        lexical_task = self.es.search(query, limit=limit * 2)
+        
+        # Use expanded query for Elasticsearch
+        lexical_task = self.es.search(expanded_query_str, limit=limit * 2)
         
         semantic_results, lexical_results = await asyncio.gather(
             semantic_task, lexical_task
         )
         
-        # 3. RRF Fusion
+        # 4. RRF Fusion
         fused_results = self.rrf.fuse(
             semantic_results, 
             lexical_results, 

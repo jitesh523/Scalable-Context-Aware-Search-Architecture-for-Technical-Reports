@@ -163,11 +163,24 @@ class FeatureFlagsSettings(BaseSettings):
     enable_web_search: bool = Field(default=False, description="Enable web search fallback")
     enable_query_expansion: bool = Field(default=True, description="Enable query expansion")
     enable_caching: bool = Field(default=True, description="Enable response caching")
-    enable_caching: bool = Field(default=True, description="Enable response caching")
     cache_ttl_seconds: int = Field(default=3600, description="Cache TTL in seconds")
     mock_mode: bool = Field(default=False, description="Enable mock mode for local testing without infrastructure")
     
     model_config = SettingsConfigDict(env_prefix="")
+
+
+class RedisSettings(BaseSettings):
+    """Redis Configuration"""
+    
+    host: str = Field(default="localhost", description="Redis host")
+    port: int = Field(default=6379, description="Redis port")
+    db: int = Field(default=0, description="Redis DB index")
+    password: Optional[str] = Field(default=None, description="Redis password")
+    ttl: int = Field(default=3600, description="Default TTL")
+    
+    model_config = SettingsConfigDict(env_prefix="")
+
+
 
 
 class Settings(BaseSettings):
@@ -184,6 +197,7 @@ class Settings(BaseSettings):
     api: APISettings = Field(default_factory=APISettings)
     observability: ObservabilitySettings = Field(default_factory=ObservabilitySettings)
     storage: StorageSettings = Field(default_factory=StorageSettings)
+    redis: RedisSettings = Field(default_factory=RedisSettings)
     features: FeatureFlagsSettings = Field(default_factory=FeatureFlagsSettings)
     
     model_config = SettingsConfigDict(
