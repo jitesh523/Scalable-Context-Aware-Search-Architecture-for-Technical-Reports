@@ -37,6 +37,12 @@ class IngestionPipeline:
         parsed_data = self.parser.parse_pdf(file_path)
         markdown_content = parsed_data["markdown"]
         metadata = parsed_data["metadata"]
+        images = parsed_data.get("images", [])
+        
+        if images:
+            logger.info(f"Found {len(images)} images in document.")
+            # TODO: Process images (e.g., generate captions with VLM)
+            metadata["image_count"] = len(images)
         
         # 2. Chunking
         logger.info("Chunking document...")

@@ -27,6 +27,7 @@ class DoclingParser:
         pipeline_options = PdfPipelineOptions()
         pipeline_options.do_ocr = True
         pipeline_options.do_table_structure = True
+        pipeline_options.generate_picture_images = True  # Enable image extraction
         pipeline_options.table_structure_options = TableStructureOptions(
             do_cell_matching=True
         )
@@ -48,6 +49,7 @@ class DoclingParser:
             Dictionary containing:
             - markdown: Full markdown representation
             - tables: List of extracted tables
+            - images: List of extracted images (metadata and paths)
             - metadata: Document metadata
             - structure: Hierarchical document structure
         """
@@ -73,6 +75,20 @@ class DoclingParser:
                     "caption": table.caption_text(doc) if hasattr(table, "caption_text") else None,
                     "page_no": table.prov[0].page_no if table.prov else None
                 })
+
+            # Extract images
+            images = []
+            # Note: In recent Docling versions, pictures might be accessed via doc.pictures
+            # We will iterate and extract basic info. 
+            # Actual image saving would happen here if we wanted to persist them to disk.
+            if hasattr(doc, "pictures"):
+                for i, picture in enumerate(doc.pictures):
+                    images.append({
+                        "id": f"img_{i}",
+                        "page_no": picture.prov[0].page_no if picture.prov else None,
+                        "caption": picture.caption_text(doc) if hasattr(picture, "caption_text") else None,
+                        # "image_data": picture.image  # PIL Image object (omitted for JSON serialization)
+                    })
                 
             # Extract metadata
             metadata = {
@@ -85,6 +101,7 @@ class DoclingParser:
             return {
                 "markdown": markdown_content,
                 "tables": tables,
+                "images": images,
                 "metadata": metadata,
                 "json_structure": doc.export_to_dict()
             }
