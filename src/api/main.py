@@ -22,6 +22,10 @@ from src.database.snowflake_client import SnowflakeClient
 from src.observability.otel_instrumentation import setup_telemetry
 from src.observability.metrics import QUERY_COUNTER, QUERY_LATENCY, FEEDBACK_SCORE
 
+# Import WebSocket server
+from src.api.websocket_server import router as websocket_router, ws_manager
+from src.voice.voice_models import VoiceProvider
+
 from config.settings import settings
 
 # Setup logging
@@ -49,6 +53,17 @@ async def lifespan(app: FastAPI):
     sql_client = CloudSQLClient()
     snowflake_client = SnowflakeClient()
     
+    # Initialize voice services if enabled
+    if settings.voice.enable_voice_interface:
+        logger.info("Initializing voice services...")
+        stt_provider = VoiceProvider(settings.voice.stt_provider)
+        tts_provider = VoiceProvider(settings.voice.tts_provider)
+        ws_manager.initialize(
+            stt_provider=stt_provider,
+            tts_provider=tts_provider,
+            elevenlabs_api_key=settings.voice.elevenlabs_api_key
+        )
+    
     yield
     
     # Shutdown
@@ -70,13 +85,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include WebSocket router
+app.include_router(websocket_router)
+
 # Instrument FastAPI
 FastAPIInstrumentor.instrument_app(app)
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "version": "1.0.0"}
+    voice_status = "enabled" if settings.voice.enable_voice_interface else "disabled"
+    local_llm_status = "enabled" if settings.local_llm.enable_local_llm else "disabled"
+    return {
+        "status": "healthy",
+        "version": "1.0.0",
+        "voice": voice_status,
+        "local_llm": local_llm_status,
+        "privacy_mode": settings.privacy.privacy_mode
+    }
 
 from src.cache.decorators import cache_response
 

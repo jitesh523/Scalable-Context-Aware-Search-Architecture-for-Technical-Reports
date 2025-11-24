@@ -181,6 +181,41 @@ class RedisSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="")
 
 
+class VoiceSettings(BaseSettings):
+    """Voice Services Configuration"""
+    
+    stt_provider: str = Field(default="openai", description="Speech-to-Text provider (openai, local_whisper)")
+    tts_provider: str = Field(default="openai", description="Text-to-Speech provider (openai, elevenlabs)")
+    elevenlabs_api_key: Optional[str] = Field(default=None, description="ElevenLabs API key")
+    default_voice_id: str = Field(default="alloy", description="Default voice ID")
+    enable_voice_interface: bool = Field(default=True, description="Enable voice interface")
+    
+    model_config = SettingsConfigDict(env_prefix="")
+
+
+class LocalLLMSettings(BaseSettings):
+    """Local LLM Configuration"""
+    
+    ollama_base_url: str = Field(default="http://localhost:11434", description="Ollama server URL")
+    ollama_model: str = Field(default="llama3", description="Default Ollama model")
+    localai_base_url: str = Field(default="http://localhost:8080/v1", description="LocalAI server URL")
+    localai_model: str = Field(default="llama3", description="Default LocalAI model")
+    enable_local_llm: bool = Field(default=False, description="Enable local LLM support")
+    default_provider: str = Field(default="openai", description="Default LLM provider (openai, ollama, localai)")
+    
+    model_config = SettingsConfigDict(env_prefix="")
+
+
+class PrivacySettings(BaseSettings):
+    """Privacy and PII Masking Configuration"""
+    
+    privacy_mode: bool = Field(default=False, description="Enable privacy mode")
+    pii_masking_enabled: bool = Field(default=True, description="Enable PII masking")
+    masking_strategy: str = Field(default="replace", description="PII masking strategy (replace, redact, hash, partial)")
+    use_ner_for_pii: bool = Field(default=False, description="Use NER model for PII detection")
+    pii_sensitivity: float = Field(default=0.7, description="PII detection sensitivity (0.0 to 1.0)")
+    
+    model_config = SettingsConfigDict(env_prefix="")
 
 
 class Settings(BaseSettings):
@@ -199,6 +234,9 @@ class Settings(BaseSettings):
     storage: StorageSettings = Field(default_factory=StorageSettings)
     redis: RedisSettings = Field(default_factory=RedisSettings)
     features: FeatureFlagsSettings = Field(default_factory=FeatureFlagsSettings)
+    voice: VoiceSettings = Field(default_factory=VoiceSettings)
+    local_llm: LocalLLMSettings = Field(default_factory=LocalLLMSettings)
+    privacy: PrivacySettings = Field(default_factory=PrivacySettings)
     
     model_config = SettingsConfigDict(
         env_file=".env",

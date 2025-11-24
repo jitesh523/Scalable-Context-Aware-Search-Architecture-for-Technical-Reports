@@ -1,6 +1,6 @@
 # Scalable Context-Aware Search Architecture for Technical Reports
 
-A production-grade RAG (Retrieval Augmented Generation) system designed to handle 10,000+ technical reports using hybrid search, agentic orchestration, and enterprise data integration.
+A production-grade RAG (Retrieval Augmented Generation) system designed to handle 10,000+ technical reports using hybrid search, agentic orchestration, enterprise data integration, **voice interface**, and **local LLM support**.
 
 ## 🏗️ Architecture Overview
 
@@ -11,6 +11,9 @@ This system implements a sophisticated multi-agent RAG architecture combining:
 - **Agentic Orchestration**: LangGraph-based multi-agent system with self-correction
 - **Enterprise Integration**: Cloud SQL (pgvector) + Snowflake for analytics
 - **Observability**: Grafana + Power BI for system and product metrics
+- **🎙️ Voice Interface**: WebSocket-based real-time voice communication with Speech-to-Text and Text-to-Speech
+- **🤖 Local LLM Support**: Ollama/LocalAI integration with intelligent model routing
+- **🔒 Privacy Mode**: PII detection and masking for sensitive data protection
 
 ## 🚀 Quick Start
 
@@ -190,11 +193,72 @@ Key configuration files:
 
 ## 📚 API Endpoints
 
+### REST API
 - `POST /search` - Hybrid search with agentic orchestration
 - `POST /ingest` - Upload and process technical documents
 - `POST /feedback` - Submit user feedback for quality metrics
 - `GET /health` - Health check endpoint
 - `GET /metrics` - Prometheus metrics
+
+### WebSocket API
+- `WS /ws/voice` - Real-time voice communication endpoint
+
+## 🎙️ Voice Interface (Phase 19)
+
+Real-time voice communication with your knowledge base:
+
+- **Speech-to-Text**: OpenAI Whisper API or local Whisper
+- **Text-to-Speech**: ElevenLabs or OpenAI TTS
+- **WebSocket Streaming**: Low-latency bidirectional audio
+- **Voice Caching**: Improved performance for common responses
+
+**Quick Start:**
+```bash
+# Run setup script
+./setup_voice_and_llm.sh
+
+# Start server
+uvicorn src.api.main:app --reload
+```
+
+See [VOICE_AND_LOCAL_LLM_GUIDE.md](VOICE_AND_LOCAL_LLM_GUIDE.md) for detailed setup.
+
+## 🤖 Local LLM Support (Phase 20)
+
+Run models locally for privacy and cost savings:
+
+- **Supported Models**: Llama 3, Phi-3, Mistral, Gemma
+- **Intelligent Routing**: Automatic selection between cloud and local
+- **Privacy Mode**: PII detection and masking
+- **Cost Optimization**: Save on API costs for high-volume queries
+
+**Quick Start:**
+```bash
+# Install Ollama
+curl https://ollama.ai/install.sh | sh
+
+# Pull model
+ollama pull llama3
+
+# Enable in .env
+ENABLE_LOCAL_LLM=true
+DEFAULT_PROVIDER=ollama
+```
+
+### Privacy Mode
+
+Automatically detect and mask PII before sending to LLMs:
+
+- Emails, phone numbers, SSNs, credit cards
+- Names, addresses (with NER)
+- Configurable masking strategies
+- Reversible masking for responses
+
+```bash
+# Enable in .env
+PRIVACY_MODE=true
+PII_MASKING_ENABLED=true
+```
 
 ## 🔐 Security
 
@@ -203,6 +267,8 @@ Key configuration files:
 - Secrets managed via GCP Secret Manager
 - Rate limiting per user
 - Non-root container execution
+- **PII masking for sensitive data**
+- **Local LLM option for maximum privacy**
 
 ## 📈 Performance
 
@@ -210,6 +276,8 @@ Key configuration files:
 - Handles 1000+ concurrent users
 - Auto-scaling on Cloud Run (0 to N instances)
 - Precision@5 > 0.8, MRR > 0.7
+- **Voice latency < 3s end-to-end**
+- **Local LLM: 20-50 tokens/second**
 
 ## 🤝 Contributing
 
@@ -226,3 +294,5 @@ Built with:
 - [LangGraph](https://github.com/langchain-ai/langgraph) - Agentic orchestration
 - [Milvus](https://milvus.io/) - Vector database
 - [Elasticsearch](https://www.elastic.co/) - Lexical search
+- [Ollama](https://ollama.ai/) - Local LLM runtime
+- [ElevenLabs](https://elevenlabs.io/) - Premium text-to-speech
